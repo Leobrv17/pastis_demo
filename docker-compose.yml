@@ -1,0 +1,38 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: library_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: library
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - library_network
+
+  api:
+    build: .
+    container_name: library_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://admin:password@mongodb:27017/library?authSource=admin
+      - DATABASE_NAME=library
+    depends_on:
+      - mongodb
+    volumes:
+      - ./app:/app/app
+    networks:
+      - library_network
+
+volumes:
+  mongodb_data:
+
+networks:
+  library_network:
+    driver: bridge
