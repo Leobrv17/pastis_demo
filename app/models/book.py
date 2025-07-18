@@ -1,20 +1,20 @@
-"""Book model definition."""
+"""Définition du modèle Book."""
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
-from beanie import Document
+from beanie import Document, Indexed
 from pydantic import Field
 
 
 class Book(Document):
-    """Book document model."""
+    """Modèle de document Book."""
 
-    title: str = Field(..., description="Titre du livre")
-    author: str = Field(..., description="Auteur du livre")
-    isbn: str = Field(..., description="ISBN du livre")
+    title: Indexed(str) = Field(..., description="Titre du livre")
+    author: Indexed(str) = Field(..., description="Auteur du livre")
+    isbn: Indexed(str) = Field(..., description="ISBN du livre")
     publication_year: int = Field(..., description="Année de publication")
-    genre: str = Field(..., description="Genre du livre")
+    genre: Indexed(str) = Field(..., description="Genre du livre")
     pages: int = Field(..., gt=0, description="Nombre de pages")
     description: Optional[str] = Field(None, description="Description du livre")
     available: bool = Field(True, description="Disponibilité du livre")
@@ -26,20 +26,21 @@ class Book(Document):
 
     class Settings:
         name = "books"
-        # Indexes basiques - beanie 1.20.0 les créera automatiquement
+        use_state_management = True
         indexes = [
             "isbn",
             "title",
             "author",
             "genre",
-            "available"
+            "available",
+            [("title", "text"), ("author", "text"), ("description", "text")]  # Index de recherche textuelle
         ]
 
     def __str__(self) -> str:
         return f"{self.title} by {self.author}"
 
     def is_overdue(self) -> bool:
-        """Check if the book is overdue."""
+        """Vérifier si le livre est en retard."""
         if not self.borrowed_date or not self.due_date:
             return False
         return datetime.utcnow() > self.due_date
